@@ -11,39 +11,36 @@ if (php_sapi_name() == 'cli') {
     define('NEWLINE', '<br>');
 }
 
+libxml_use_internal_errors(true);
+
 class AdslChecker
 {
     private static $website_url = 'http://adsl.tci.ir';
     private static $cookie_file = __DIR__.'/adsl_cookie.txt';
-    private static $op_file = __DIR__.'/op.txt';
+    private static $useragent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.7) Gecko/20070914 Firefox/2.0.0.7';
 
     public static function getCaptcha()
     {
-        $ch = curl_init(self::$website_url);
+        $ch = curl_init(self::$website_url.'/captcha_code_file.php');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_COOKIEJAR, self::$cookie_file);
         curl_setopt($ch, CURLOPT_COOKIEFILE, self::$cookie_file);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.7) Gecko/20070914 Firefox/2.0.0.7');
-        $op = curl_exec($ch);
-        preg_match('/op=(.*?)"/', $op, $op);
-        $op = $op[1];
-        file_put_contents(self::$op_file, $op);
-        curl_setopt($ch, CURLOPT_URL, 'http://adsl.tci.ir/captcha_code_file.php');
-        $captcha = curl_exec($ch);
+        curl_setopt($ch, CURLOPT_USERAGENT, self::$useragent);
+        $response = curl_exec($ch);
         curl_close($ch);
 
-        return $captcha;
+        return $response;
     }
 
     public static function loginAndGetInfo($username, $password, $captcha)
     {
-        $ch = curl_init(self::$website_url.'/user.php?op='.file_get_contents(self::$op_file));
+        $ch = curl_init(self::$website_url.'/panel/login/'.time());
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, ['hidlogin' => '1', 'username' => $username, 'password' => $password, 'seccode' => $captcha, 'submit' => 'ورود به سامانه']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, ['redirect' => '', 'username' => $username, 'password' => $password, 'captcha' => $captcha, 'LoginFromWeb' => '']);
         curl_setopt($ch, CURLOPT_COOKIEJAR, self::$cookie_file);
         curl_setopt($ch, CURLOPT_COOKIEFILE, self::$cookie_file);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.7) Gecko/20070914 Firefox/2.0.0.7');
+        curl_setopt($ch, CURLOPT_USERAGENT, self::$useragent);
         $response = curl_exec($ch);
         curl_close($ch);
         if ($error = self::checkError($response)) {
@@ -51,16 +48,17 @@ class AdslChecker
         }
 
         return self::parseInfo($response);
+        return $response;
     }
 
     public static function getInfo()
     {
-        $ch = curl_init(self::$website_url);
+        $ch = curl_init(self::$website_url.'/panel/');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_COOKIEJAR, self::$cookie_file);
         curl_setopt($ch, CURLOPT_COOKIEFILE, self::$cookie_file);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.7) Gecko/20070914 Firefox/2.0.0.7');
+        curl_setopt($ch, CURLOPT_USERAGENT, self::$useragent);
         $response = curl_exec($ch);
         curl_close($ch);
         if ($error = self::checkError($response)) {
@@ -72,39 +70,29 @@ class AdslChecker
 
     public static function parseInfo($text)
     {
-        if (preg_match_all('/<td class=[\'\"]lable2.*?>(.*?)<\/td>/s', $text, $response)) {
-            $result = '';
-            for ($i = 0; $i < count($response[1]); $i = $i + 2) {
-                if (empty($response[1][$i]) || $response[1][$i] == '&nbsp;' || preg_match('/(تست سرعت|خرید ترافیک|تمدید سرویس|تغییر سرویس|جهت مشاهده|اعتبار پنل)/su', $response[1][$i])) {
-                    continue;
-                }
-                $response[1][$i] = trim($response[1][$i]);
-                $response[1][$i] = str_replace(' :', ':', $response[1][$i]);
-                $response[1][$i + 1] = trim($response[1][$i + 1]);
-                $response[1][$i + 1] = str_replace(' :', ':', $response[1][$i + 1]);
-                $result .= $response[1][$i];
-                $response[1][$i + 1] = preg_replace('/([\x{0600}-\x{06FF}\s])([0-9]+)/u', '$1 $2', $response[1][$i + 1]);
-                if (preg_match('/title=\'(.*?)\'/', $response[1][$i + 1])) {
-                    $result .= ' ';
-                    preg_match('/title=\'(.*?)\'/', $response[1][$i + 1], $title);
-                    $result .= $title[1].NEWLINE;
-                } elseif (preg_match_all('/>(.*?\S.*?)</s', $response[1][$i + 1], $parts)) {
-                    if (count($parts[1]) > 1) {
-                        $result .= NEWLINE;
-                    } else {
-                        $result .= ' ';
-                    }
-                    $response[1][$i + 1] = '';
-                    foreach ($parts[1] as $part) {
-                        $response[1][$i + 1] .= $part.NEWLINE;
-                    }
-                    $result .= $response[1][$i + 1].NEWLINE;
-                } else {
-                    $result .= ' ';
-                    $result .= $response[1][$i + 1].NEWLINE;
-                }
+        if(strpos($text, 'کد امنیتی وارد شده نادرست است.') !== false) {
+            return '<p style="color:red">کد امنیتی وارد شده نادرست است.</p>';
+        } elseif (strpos($text, 'نام کاربری با گذرواژه همخوانی ندارد.') !== false) {
+           return '<p style="color:red">نام کاربری با گذرواژه همخوانی ندارد.</p>';
+        } elseif (preg_match('/کد مشترک: [0-9]+/', $text, $client_code)) {
+            $result = '<p style="color:green">ورود با موفقیت انجام شد.</p>';
+            $result .= NEWLINE;
+            $result .= $client_code[0];
+            $result .= NEWLINE;
+            preg_match('/شماره تلفن: [0-9]+/', $text, $phone_number);
+            $result .= $phone_number[0];
+            $result .= NEWLINE;
+            $info = self::xpathQuery($text, '//div/div/div/ul/li');
+            foreach($info as $item) {
+                $result .= $item.NEWLINE;
             }
+            $remained = self::xpathQuery($text, '//div[@class="percent"]/span');
+            $result .= $remained[0].' از '.$remained[1].NEWLINE;
+            $result .= $remained[2].' از '.$remained[3].NEWLINE;
             $result = str_replace(['ي', 'ك'], ['ی', 'ک'], $result);
+
+            $active_service = self::xpathQuery($text, '(//h5)[1]');
+            $result .= 'سرویس فعال شما: '.$active_service[0].NEWLINE;
 
             return $result;
         }
@@ -126,5 +114,18 @@ class AdslChecker
         if (is_file(self::$cookie_file)) {
             unlink(self::$cookie_file);
         }
+    }
+
+    private static function xpathQuery($html, $query) {
+        $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+        $dom = new DomDocument;
+        $dom->loadHTML($html);
+        $xpath = new DomXPath($dom);
+        $results = $xpath->query($query);
+        $results_array = [];
+        foreach ($results as $node) {
+            $results_array[] = $node->nodeValue;
+        }
+        return $results_array;
     }
 }
