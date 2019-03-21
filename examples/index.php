@@ -1,13 +1,10 @@
 <?php
 
-require __DIR__'/../AdslChecker.php';
+require __DIR__.'/AdslChecker.php';
 
 if(!empty($_POST['username']) && !empty($_POST['password']) && !empty($_POST['captcha'])) {
     echo AdslChecker::loginAndGetInfo($_POST['username'], $_POST['password'], $_POST['captcha']);
     AdslChecker::logout();
-}
-else {
-    file_put_contents('captcha.jpg', AdslChecker::getCaptcha());
 }
 
 ?>
@@ -17,16 +14,16 @@ else {
   <head>
     <title></title>
   </head>
-  <body>
+  <body dir="rtl" lang="fa">
     <br>
-    <img src="captcha.php?rand=<?php echo time() ?>">
+    <img src="captcha.php?rand=<?=time()?>">
     <form method="post">
-      <input type="text" name="username" placeholder="username" required>
+      <input type="text" name="username" placeholder="نام کاربری" dir="ltr" required>
       <br>
-      <input type="password" name="password" placeholder="password" required>
+      <input type="password" name="password" placeholder="رمز عبور" dir="ltr" required>
       <br>
-      <input type="text" name="captcha" placeholder="captcha" required>
-      <input type="submit" name="submit">
+      <input type="text" name="captcha" placeholder="کد امنیتی" dir="ltr" required>
+      <input type="submit" name="submit" value="ورود">
     </form>
   </body>
 </html>
