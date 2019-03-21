@@ -48,6 +48,7 @@ class AdslChecker
         }
 
         return self::parseInfo($response);
+
         return $response;
     }
 
@@ -70,10 +71,10 @@ class AdslChecker
 
     public static function parseInfo($text)
     {
-        if(strpos($text, 'کد امنیتی وارد شده نادرست است.') !== false) {
+        if (strpos($text, 'کد امنیتی وارد شده نادرست است.') !== false) {
             return '<p style="color:red">کد امنیتی وارد شده نادرست است.</p>';
         } elseif (strpos($text, 'نام کاربری با گذرواژه همخوانی ندارد.') !== false) {
-           return '<p style="color:red">نام کاربری با گذرواژه همخوانی ندارد.</p>';
+            return '<p style="color:red">نام کاربری با گذرواژه همخوانی ندارد.</p>';
         } elseif (preg_match('/کد مشترک: [0-9]+/', $text, $client_code)) {
             $result = '<p style="color:green">ورود با موفقیت انجام شد.</p>';
             $result .= NEWLINE;
@@ -83,7 +84,7 @@ class AdslChecker
             $result .= $phone_number[0];
             $result .= NEWLINE;
             $info = self::xpathQuery($text, '//div/div/div/ul/li');
-            foreach($info as $item) {
+            foreach ($info as $item) {
                 $result .= $item.NEWLINE;
             }
             $remained = self::xpathQuery($text, '//div[@class="percent"]/span');
@@ -116,9 +117,10 @@ class AdslChecker
         }
     }
 
-    private static function xpathQuery($html, $query) {
+    private static function xpathQuery($html, $query)
+    {
         $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
-        $dom = new DomDocument;
+        $dom = new DomDocument();
         $dom->loadHTML($html);
         $xpath = new DomXPath($dom);
         $results = $xpath->query($query);
@@ -126,6 +128,7 @@ class AdslChecker
         foreach ($results as $node) {
             $results_array[] = $node->nodeValue;
         }
+
         return $results_array;
     }
 }
