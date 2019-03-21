@@ -2,7 +2,7 @@
 
 require __DIR__.'/AdslChecker.php';
 
-if(!empty($_POST['username']) && !empty($_POST['password']) && !empty($_POST['captcha'])) {
+if (!empty($_POST['username']) && !empty($_POST['password']) && !empty($_POST['captcha'])) {
     echo AdslChecker::loginAndGetInfo($_POST['username'], $_POST['password'], $_POST['captcha']);
     AdslChecker::logout();
 }
