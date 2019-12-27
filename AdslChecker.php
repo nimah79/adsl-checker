@@ -25,9 +25,9 @@ class AdslChecker
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_COOKIEJAR => self::$cookie_file,
-            CURLOPT_COOKIEFILE => self::$cookie_file,
-            CURLOPT_USERAGENT => self::$useragent
+            CURLOPT_COOKIEJAR      => self::$cookie_file,
+            CURLOPT_COOKIEFILE     => self::$cookie_file,
+            CURLOPT_USERAGENT      => self::$useragent,
         ]);
         $response = curl_exec($ch);
         curl_close($ch);
@@ -41,11 +41,11 @@ class AdslChecker
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_POSTFIELDS => http_build_query(['redirect' => '', 'username' => $username, 'password' => $password, 'captcha' => $captcha, 'LoginFromWeb' => '']),
-            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
-            CURLOPT_COOKIEJAR => self::$cookie_file,
-            CURLOPT_COOKIEFILE => self::$cookie_file,
-            CURLOPT_USERAGENT => self::$useragent
+            CURLOPT_POSTFIELDS     => http_build_query(['redirect' => '', 'username' => $username, 'password' => $password, 'captcha' => $captcha, 'LoginFromWeb' => '']),
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
+            CURLOPT_COOKIEJAR      => self::$cookie_file,
+            CURLOPT_COOKIEFILE     => self::$cookie_file,
+            CURLOPT_USERAGENT      => self::$useragent,
         ]);
         $response = curl_exec($ch);
         curl_close($ch);
@@ -64,9 +64,9 @@ class AdslChecker
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_COOKIEJAR => self::$cookie_file,
-            CURLOPT_COOKIEFILE => self::$cookie_file,
-            CURLOPT_USERAGENT => self::$useragent
+            CURLOPT_COOKIEJAR      => self::$cookie_file,
+            CURLOPT_COOKIEFILE     => self::$cookie_file,
+            CURLOPT_USERAGENT      => self::$useragent,
         ]);
         $response = curl_exec($ch);
         curl_close($ch);
