@@ -1,2 +1,2 @@
 # adsl-checker
-Simple scraper for http://adsl.tci.ir
+Simple scraper for https://adsl.tci.ir

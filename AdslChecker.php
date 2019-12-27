@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Simple scraper for http://adsl.tci.ir
+ * Simple scraper for https://adsl.tci.ir
  * By NimaH79
  * NimaH79.ir.
  */
@@ -15,7 +15,7 @@ libxml_use_internal_errors(true);
 
 class AdslChecker
 {
-    private static $website_url = 'http://adsl.tci.ir';
+    private static $website_url = 'https://adsl.tci.ir';
     private static $cookie_file = __DIR__.'/adsl_cookie.txt';
     private static $useragent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.7) Gecko/20070914 Firefox/2.0.0.7';
 
@@ -23,6 +23,7 @@ class AdslChecker
     {
         $ch = curl_init(self::$website_url.'/captcha_code_file.php');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_COOKIEJAR, self::$cookie_file);
         curl_setopt($ch, CURLOPT_COOKIEFILE, self::$cookie_file);
         curl_setopt($ch, CURLOPT_USERAGENT, self::$useragent);
@@ -37,7 +38,8 @@ class AdslChecker
         $ch = curl_init(self::$website_url.'/panel/login/'.time());
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, ['redirect' => '', 'username' => $username, 'password' => $password, 'captcha' => $captcha, 'LoginFromWeb' => '']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['redirect' => '', 'username' => $username, 'password' => $password, 'captcha' => $captcha, 'LoginFromWeb' => '']));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
         curl_setopt($ch, CURLOPT_COOKIEJAR, self::$cookie_file);
         curl_setopt($ch, CURLOPT_COOKIEFILE, self::$cookie_file);
         curl_setopt($ch, CURLOPT_USERAGENT, self::$useragent);
@@ -73,9 +75,11 @@ class AdslChecker
     {
         if (strpos($text, 'کد امنیتی وارد شده نادرست است.') !== false) {
             return '<p style="color:red">کد امنیتی وارد شده نادرست است.</p>';
-        } elseif (strpos($text, 'نام کاربری با گذرواژه همخوانی ندارد.') !== false) {
+        }
+        if (strpos($text, 'نام کاربری با گذرواژه همخوانی ندارد.') !== false) {
             return '<p style="color:red">نام کاربری با گذرواژه همخوانی ندارد.</p>';
-        } elseif (preg_match('/کد مشترک: [0-9]+/', $text, $client_code)) {
+        }
+        if (preg_match('/کد مشترک: [0-9]+/', $text, $client_code)) {
             $result = '<p style="color:green">ورود با موفقیت انجام شد.</p>';
             $result .= NEWLINE;
             $result .= $client_code[0];
