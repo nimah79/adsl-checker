@@ -22,11 +22,13 @@ class AdslChecker
     public static function getCaptcha()
     {
         $ch = curl_init(self::$website_url.'/captcha_code_file.php');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_COOKIEJAR, self::$cookie_file);
-        curl_setopt($ch, CURLOPT_COOKIEFILE, self::$cookie_file);
-        curl_setopt($ch, CURLOPT_USERAGENT, self::$useragent);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_COOKIEJAR => self::$cookie_file,
+            CURLOPT_COOKIEFILE => self::$cookie_file,
+            CURLOPT_USERAGENT => self::$useragent
+        ]);
         $response = curl_exec($ch);
         curl_close($ch);
 
@@ -36,13 +38,15 @@ class AdslChecker
     public static function loginAndGetInfo($username, $password, $captcha)
     {
         $ch = curl_init(self::$website_url.'/panel/login/'.time());
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['redirect' => '', 'username' => $username, 'password' => $password, 'captcha' => $captcha, 'LoginFromWeb' => '']));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
-        curl_setopt($ch, CURLOPT_COOKIEJAR, self::$cookie_file);
-        curl_setopt($ch, CURLOPT_COOKIEFILE, self::$cookie_file);
-        curl_setopt($ch, CURLOPT_USERAGENT, self::$useragent);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_POSTFIELDS => http_build_query(['redirect' => '', 'username' => $username, 'password' => $password, 'captcha' => $captcha, 'LoginFromWeb' => '']),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+            CURLOPT_COOKIEJAR => self::$cookie_file,
+            CURLOPT_COOKIEFILE => self::$cookie_file,
+            CURLOPT_USERAGENT => self::$useragent
+        ]);
         $response = curl_exec($ch);
         curl_close($ch);
         if ($error = self::checkError($response)) {
@@ -57,11 +61,13 @@ class AdslChecker
     public static function getInfo()
     {
         $ch = curl_init(self::$website_url.'/panel/');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_COOKIEJAR, self::$cookie_file);
-        curl_setopt($ch, CURLOPT_COOKIEFILE, self::$cookie_file);
-        curl_setopt($ch, CURLOPT_USERAGENT, self::$useragent);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_COOKIEJAR => self::$cookie_file,
+            CURLOPT_COOKIEFILE => self::$cookie_file,
+            CURLOPT_USERAGENT => self::$useragent
+        ]);
         $response = curl_exec($ch);
         curl_close($ch);
         if ($error = self::checkError($response)) {
@@ -71,7 +77,14 @@ class AdslChecker
         return self::parseInfo($response);
     }
 
-    public static function parseInfo($text)
+    public static function logout()
+    {
+        if (is_file(self::$cookie_file)) {
+            unlink(self::$cookie_file);
+        }
+    }
+
+    private static function parseInfo($text)
     {
         if (strpos($text, 'کد امنیتی وارد شده نادرست است.') !== false) {
             return '<p style="color:red">کد امنیتی وارد شده نادرست است.</p>';
@@ -105,20 +118,13 @@ class AdslChecker
         return false;
     }
 
-    public static function checkError($response)
+    private static function checkError($response)
     {
         if (preg_match('/<td class=error>(.*?)<\/td>/', $response, $error)) {
             return $error[1];
         }
 
         return false;
-    }
-
-    public static function logout()
-    {
-        if (is_file(self::$cookie_file)) {
-            unlink(self::$cookie_file);
-        }
     }
 
     private static function xpathQuery($html, $query)
